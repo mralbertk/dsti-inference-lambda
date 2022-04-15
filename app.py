@@ -91,4 +91,4 @@ def predict_saved_model(img_path, model_path):
         % (100 * (1 - score), 100 * score)
     )
 
-    return {"cat": str(100 * (1 - score)), "dog": str(100 * score)}
+    return {"cat": str((100 * (1 - score))[0]), "dog": str((100 * score)[0])}
