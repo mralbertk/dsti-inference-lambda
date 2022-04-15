@@ -29,19 +29,19 @@ def handler(event, context):
     # S3 bucket name
     s3_bucket = urllib.parse.unquote_plus(
         event['Records'][0]['s3']['bucket']['name'], encoding='utf-8'
-        )["Parameters"][0]["Value"].replace("\n", "")
+        )
 
 
     # S3 Model object in bucket
     s3_model_path = ssm_client.get_parameters(
         Names=['model_path'], WithDecryption=True
-        )["Parameters"][0]["Value"]
+        )["Parameters"][0]["Value"].replace("\n", "")
 
 
     # S3 Model bucket
     s3_model_bucket = ssm_client.get_parameters(
         Names=['model_bucket'], WithDecryption=True
-        )
+        )["Parameters"][0]["Value"]
 
 
     # Download image container
