@@ -9,28 +9,34 @@ import boto3
 
 def handler(event, context):
 
+
     # Set up some variables we'll need
     image_path = "/tmp/image.jpg"
     model_path = "/tmp/model.h5"
 
+
     # Connect to AWS Services
     s3_client = boto3.client('s3')
     ssm_client = boto3.client('ssm')
+
 
     # S3 Image object name
     s3_img = urllib.parse.unquote_plus(
         event['Records'][0]['s3']['object']['key'], encoding='utf-8'
         )
 
+
     # S3 bucket name
     s3_bucket = urllib.parse.unquote_plus(
         event['Records'][0]['s3']['bucket']['name'], encoding='utf-8'
-        )
+        )["Parameters"][0]["Value"].replace("\n", "")
+
 
     # S3 Model object in bucket
     s3_model_path = ssm_client.get_parameters(
         Names=['model_path'], WithDecryption=True
-        )
+        )["Parameters"][0]["Value"]
+
 
     # S3 Model bucket
     s3_model_bucket = ssm_client.get_parameters(
@@ -47,8 +53,10 @@ def handler(event, context):
     with open(model_path, 'wb') as f:
         s3_client.download_fileobj(s3_model_bucket, s3_model_path, f)
 
+
     # Make the inference
     prediction = predict_saved_model(image_path, model_path)
+
 
     return {
         "statusCode": 200,
