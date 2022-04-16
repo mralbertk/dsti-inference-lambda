@@ -1,62 +1,52 @@
 import tensorflow as tf
 from tensorflow import keras
-import numpy as np
-import PIL
 import json
 import urllib.parse
 import boto3
 
 
 def handler(event, context):
-
-
-    # Set up some variables we'll need
+    """
+    AWS Lambda Implementation
+    """
+    # Internal storage configuration
     image_path = "/tmp/image.jpg"
     model_path = "/tmp/model.h5"
-
 
     # Connect to AWS Services
     s3_client = boto3.client('s3')
     ssm_client = boto3.client('ssm')
 
-
-    # S3 Image object name
+    # S3 Image object name from event
     s3_img = urllib.parse.unquote_plus(
         event['Records'][0]['s3']['object']['key'], encoding='utf-8'
         )
 
-
-    # S3 bucket name
+    # S3 bucket name from event
     s3_bucket = urllib.parse.unquote_plus(
         event['Records'][0]['s3']['bucket']['name'], encoding='utf-8'
         )
 
-
-    # S3 Model object in bucket
+    # S3 model object from parameter store
     s3_model_path = ssm_client.get_parameters(
         Names=['model_path'], WithDecryption=True
         )["Parameters"][0]["Value"].replace("\n", "")
 
-
-    # S3 Model bucket
+    # S3 model bucket from parameter store
     s3_model_bucket = ssm_client.get_parameters(
         Names=['model_bucket'], WithDecryption=True
         )["Parameters"][0]["Value"]
 
-
-    # Download image container
+    # Download image to container
     with open(image_path, 'wb') as f:
         s3_client.download_fileobj(s3_bucket, s3_img, f)
 
-
-    # Download model container
+    # Download model to container
     with open(model_path, 'wb') as f:
         s3_client.download_fileobj(s3_model_bucket, s3_model_path, f)
 
-
     # Make the inference
     prediction = predict_saved_model(image_path, model_path)
-
 
     return {
         "statusCode": 200,
@@ -70,12 +60,10 @@ def handler(event, context):
     }
 
 
-
 def predict_saved_model(img_path, model_path):
-    '''
+    """
     Takes the saved model to make an inference on a given image
-    '''
-    #model = tf.saved_model.load('models/my_saved_model')
+    """
     model = tf.keras.models.load_model(model_path)
     image_size = (180, 180)
     img = keras.preprocessing.image.load_img(
